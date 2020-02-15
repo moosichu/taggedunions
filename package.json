@@ -1,0 +1,15 @@
+{
+    "name": "com.moosichu.taggedunions",
+    "version": "0.1.0",
+    "displayName": "Tagged Unions",
+    "description": "A hacky user-level implementation of tagged unions (kinda)",
+    "unity": "2019.3",
+    "author": {
+      "name": "Tom Maenan Read Cutting",
+      "email": "readcuttingt@gmail.com",
+      "url": "https://moosichu.com/"
+    },
+    "dependencies": {
+     "com.unity.collections": "0.4.0-preview.6"
+    }
+  }
