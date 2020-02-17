@@ -47,18 +47,38 @@ namespace TMRC.TaggedUnion
             }
         }
 
+        private static bool IntEquals<TTag>(TTag tag1, TTag tag2) where TTag : struct, System.Enum
+        {
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, int>();
+#endif
+            return UnsafeUtility.EnumToInt(tag1) == UnsafeUtility.EnumToInt(tag2);
+        }
+
+        private static bool ShortEquals<TTag>(TTag tag1, TTag tag2) where TTag : struct, System.Enum
+        {
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, short>();
+#endif
+            return (UnsafeUtility.EnumToInt(tag1) & ushort.MaxValue) == (UnsafeUtility.EnumToInt(tag2) & ushort.MaxValue);
+        }
+
+        private static bool ByteEquals<TTag>(TTag tag1, TTag tag2) where TTag : struct, System.Enum
+        {
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, short>();
+#endif
+            return (UnsafeUtility.EnumToInt(tag1) & byte.MaxValue) == (UnsafeUtility.EnumToInt(tag2) & byte.MaxValue);
+        }
+
         public static bool UnpackInt<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
             where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
-
-#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
-            TagTypeCheck<TTag, int>();
-#endif
             value = default;
-            if (UnsafeUtility.EnumToInt(value.Tag) != UnsafeUtility.EnumToInt(taggedUnion.Tag))
+            if (!IntEquals(value.Tag, taggedUnion.Tag))
             {
                 return false;
             }
@@ -81,12 +101,8 @@ namespace TMRC.TaggedUnion
             where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
-
-#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
-            TagTypeCheck<TTag, short>();
-#endif
             value = default;
-            if ((UnsafeUtility.EnumToInt(value.Tag) & ushort.MaxValue) != (UnsafeUtility.EnumToInt(taggedUnion.Tag) & ushort.MaxValue))
+            if (!ShortEquals(value.Tag, taggedUnion.Tag))
             {
                 return false;
             }
@@ -109,12 +125,8 @@ namespace TMRC.TaggedUnion
             where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
-
-#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
-            TagTypeCheck<TTag, byte>();
-#endif
             value = default;
-            if ((UnsafeUtility.EnumToInt(value.Tag) & byte.MaxValue) != (UnsafeUtility.EnumToInt(taggedUnion.Tag) & byte.MaxValue))
+            if (!ByteEquals(value.Tag, taggedUnion.Tag))
             {
                 return false;
             }
@@ -165,6 +177,56 @@ namespace TMRC.TaggedUnion
             }
 
             return taggedUnion;
+        }
+
+        public static void Write<TValue, TTag>(NativeStream.Writer nativeStreamWriter, TValue value)
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+        {
+            nativeStreamWriter.Write<TTag>(value.Tag);
+            nativeStreamWriter.Write<TValue>(value);
+        }
+
+        public static bool TryReadInt<TValue, TTag>(NativeStream.Reader nativeStreamReader, out TValue value)
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+        {
+            value = default;
+            if(IntEquals(nativeStreamReader.Peek<TTag>(), value.Tag))
+            {
+                nativeStreamReader.Read<TTag>();
+                value = nativeStreamReader.Read<TValue>();
+                return true;
+            }
+            return false;
+        }
+
+        public static bool TryReadShort<TValue, TTag>(NativeStream.Reader nativeStreamReader, out TValue value)
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+        {
+            value = default;
+            if(ShortEquals(nativeStreamReader.Peek<TTag>(), value.Tag))
+            {
+                nativeStreamReader.Read<TTag>();
+                value = nativeStreamReader.Read<TValue>();
+                return true;
+            }
+            return false;
+        }
+
+        public static bool TryReadByte<TValue, TTag>(NativeStream.Reader nativeStreamReader, out TValue value)
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+        {
+            value = default;
+            if(ByteEquals(nativeStreamReader.Peek<TTag>(), value.Tag))
+            {
+                nativeStreamReader.Read<TTag>();
+                value = nativeStreamReader.Read<TValue>();
+                return true;
+            }
+            return false;
         }
     }
 }
