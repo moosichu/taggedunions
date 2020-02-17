@@ -138,3 +138,5 @@ public static class ExampleCode
 # Safety checks
 
 Calls to `Pack()` will run a safety check to ensure that a given tagged union value will fit into the root type. These can be disabled (for production purposes, for example) by defining `TMRC_TAGGED_UNION_SAFETY_DISABLED`.
+
+It's also worth noting that tagged union values MUST be value types and blittable!
