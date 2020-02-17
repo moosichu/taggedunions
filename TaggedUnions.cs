@@ -14,7 +14,7 @@ namespace TMRC.TaggedUnion
     }
 
     public unsafe interface ITaggedUnion<TTag, TData, TTaggedUnion>
-        where TTag :  struct, System.Enum
+        where TTag : struct, System.Enum
         where TData : struct, IUnionData
         where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
     {
@@ -27,16 +27,94 @@ namespace TMRC.TaggedUnion
         public TaggedUnionIsTooBigException(string s) : base(s) { }
     }
 
+    public class BadTagEnumTypeException : System.Exception
+    {
+        public BadTagEnumTypeException(string s) : base(s) { }
+    }
+
+
+
     public static class TaggedUnionExtension
     {
-        public static bool Unpack<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
+        [BurstDiscard]
+        private static void TagTypeCheck<TTag, TExpectedUnderlyingType>()
+                where TTag : struct, System.Enum
+                where TExpectedUnderlyingType : struct
+        {
+            if (UnsafeUtility.SizeOf<TTag>() != UnsafeUtility.SizeOf<TExpectedUnderlyingType>())
+            {
+                throw new System.Exception($"The tag type {typeof(TTag)} uses the wrong underlying type for the Unpack() method called, please call the one with the correct specific underlying type.");
+            }
+        }
+
+        public static bool UnpackInt<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
-            where TTag :  struct, System.Enum
+            where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
+
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, int>();
+#endif
             value = default;
             if (UnsafeUtility.EnumToInt(value.Tag) != UnsafeUtility.EnumToInt(taggedUnion.Tag))
+            {
+                return false;
+            }
+
+            unsafe
+            {
+                TData data = taggedUnion.Data;
+                void* dataPtr = UnsafeUtility.AddressOf(ref data);
+                UnsafeUtility.CopyPtrToStructure(dataPtr, out value);
+            }
+
+            return true;
+        }
+
+
+
+        public static bool UnpackShort<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
+            where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+            where TData : struct, IUnionData
+        {
+
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, short>();
+#endif
+            value = default;
+            if ((UnsafeUtility.EnumToInt(value.Tag) & ushort.MaxValue) != (UnsafeUtility.EnumToInt(taggedUnion.Tag) & ushort.MaxValue))
+            {
+                return false;
+            }
+
+            unsafe
+            {
+                TData data = taggedUnion.Data;
+                void* dataPtr = UnsafeUtility.AddressOf(ref data);
+                UnsafeUtility.CopyPtrToStructure(dataPtr, out value);
+            }
+
+            return true;
+        }
+
+
+
+        public static bool UnpackByte<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
+            where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
+            where TValue : struct, ITaggedUnionValue<TTag, TValue>
+            where TTag : struct, System.Enum
+            where TData : struct, IUnionData
+        {
+
+#if !TMRC_TAGGED_UNION_SAFETY_DISABLED
+            TagTypeCheck<TTag, byte>();
+#endif
+            value = default;
+            if ((UnsafeUtility.EnumToInt(value.Tag) & byte.MaxValue) != (UnsafeUtility.EnumToInt(taggedUnion.Tag) & byte.MaxValue))
             {
                 return false;
             }
@@ -55,7 +133,7 @@ namespace TMRC.TaggedUnion
         private static void SizeCheck<TValue, TTaggedUnion, TTag, TData>()
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
-            where TTag :  struct, System.Enum
+            where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
             if (UnsafeUtility.SizeOf<TValue>() > UnsafeUtility.SizeOf<TData>())
@@ -69,7 +147,7 @@ namespace TMRC.TaggedUnion
         public static TTaggedUnion Pack<TValue, TTaggedUnion, TTag, TData>(TValue value)
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
-            where TTag :  struct, System.Enum
+            where TTag : struct, System.Enum
             where TData : struct, IUnionData
         {
             TTaggedUnion taggedUnion = default;
