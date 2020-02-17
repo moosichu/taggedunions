@@ -67,7 +67,10 @@ public static class EventExtensions
     public static bool Unpack<TEventValue>(this Event e, out TEventValue value)
         where TEventValue : struct, ITaggedUnionValue<EventTag, TEventValue>
     {
-        return TaggedUnionExtension.Unpack<TEventValue, Event, EventTag, EventData>(e, out value);
+        // We call "UnpackByte" because "EventTag" uses System.Byte as an underlying type.
+        // this is important because Unity's EnumToInt function grabs an int worth of memory, which
+        // may result in an incorrect value being computed
+        return TaggedUnionExtension.UnpackByte<TEventValue, Event, EventTag, EventData>(e, out value);
     }
 
     public static Event Pack<TEventValue>(this TEventValue value)
