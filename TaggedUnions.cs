@@ -6,14 +6,14 @@ namespace TMRC.TaggedUnion
     public interface IUnionData { }
 
     public interface ITaggedUnionValue<TTag, TValue>
-        where TTag : System.Enum
+        where TTag : struct, System.Enum
         where TValue : struct, ITaggedUnionValue<TTag, TValue>
     {
         TTag Tag { get; }
     }
 
     public unsafe interface ITaggedUnion<TTag, TData, TTaggedUnion>
-        where TTag : System.Enum
+        where TTag :  struct, System.Enum
         where TData : struct, IUnionData
         where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
     {
@@ -31,11 +31,11 @@ namespace TMRC.TaggedUnion
         public static bool Unpack<TValue, TTaggedUnion, TTag, TData>(TTaggedUnion taggedUnion, out TValue value)
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
-            where TTag : System.Enum
+            where TTag :  struct, System.Enum
             where TData : struct, IUnionData
         {
             value = default;
-            if (!value.Tag.Equals(taggedUnion.Tag))
+            if (UnsafeUtility.EnumToInt(value.Tag) != UnsafeUtility.EnumToInt(taggedUnion.Tag))
             {
                 return false;
             }
@@ -53,7 +53,7 @@ namespace TMRC.TaggedUnion
         public static TTaggedUnion Pack<TValue, TTaggedUnion, TTag, TData>(TValue value)
             where TTaggedUnion : struct, ITaggedUnion<TTag, TData, TTaggedUnion>
             where TValue : struct, ITaggedUnionValue<TTag, TValue>
-            where TTag : System.Enum
+            where TTag :  struct, System.Enum
             where TData : struct, IUnionData
         {
             TTaggedUnion taggedUnion = default;
