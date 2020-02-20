@@ -66,7 +66,7 @@ namespace TMRC.TaggedUnion
         private static bool ByteEquals<TTag>(TTag tag1, TTag tag2) where TTag : struct, System.Enum
         {
 #if !TMRC_TAGGED_UNION_SAFETY_DISABLED
-            TagTypeCheck<TTag, short>();
+            TagTypeCheck<TTag, byte>();
 #endif
             return (UnsafeUtility.EnumToInt(tag1) & byte.MaxValue) == (UnsafeUtility.EnumToInt(tag2) & byte.MaxValue);
         }
